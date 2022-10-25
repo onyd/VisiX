@@ -1,0 +1,28 @@
+#version 430 core
+
+layout( local_size_x = 32 ) in; 
+ 
+uniform float dt; 
+
+uniform float a = 40.0;
+uniform float b = 0.833;
+uniform float c = 20.0;
+uniform float d = 0.5;
+uniform float e = 0.65;
+ 
+layout(std430, binding=0) buffer Pos { 
+  vec4 Position[]; 
+}; 
+ 
+void main() { 
+  uint idx = gl_GlobalInvocationID.x; 
+ 
+  float x = Position[idx].x; 
+  float y = Position[idx].y; 
+  float z = Position[idx].z; 
+  vec4 v = vec4(a*(y-x) + d*x*z, c*y - x*z, b*z + x*y - e*x*x, 0.0);
+
+  float h = 0.1 * dt;
+  
+  Position[idx] = Position[idx] + h * v;  
+} 
