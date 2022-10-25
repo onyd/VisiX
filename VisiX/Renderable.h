@@ -1,7 +1,10 @@
+#pragma once 
+
 #include "ShaderClass.h"
-#include "Camera.h"
 #include "Mesh.h"
-#include "Attribute.h"
+
+class Camera;
+class BaseAttribute;
 
 class Renderable
 {
@@ -13,12 +16,16 @@ protected:
 	std::vector<std::pair<const Shader&, std::shared_ptr<BaseAttribute>>> m_attributes;
 };
 
+typedef std::shared_ptr<Renderable> RenderablePtr;
+
 class MeshRenderable : public Renderable
 {
 public:
-	MeshRenderable(const Mesh& mesh, const Shader& shader, std::initializer_list<std::pair<const Shader&, std::shared_ptr<BaseAttribute>>> attributes);
+	MeshRenderable(const MeshPtr& mesh, const Shader& shader, std::initializer_list<std::pair<const Shader&, std::shared_ptr<BaseAttribute>>> attributes);
 	virtual void draw(const Camera& camera) const;
+
+	Mesh& getMesh();
 private:
-	Mesh m_mesh;
+	MeshPtr m_mesh;
 	Shader m_shader;
 };

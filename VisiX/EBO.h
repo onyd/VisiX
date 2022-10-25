@@ -3,12 +3,13 @@
 #include <vector>
 #include <glad/glad.h>
 
-#include "GLObject.h"
+#include "Buffer.h"
 
-class EBO : public GLObject {
+class EBO : public Buffer
+{
 public:
 	/**
-	 * @fn	EBO::EBO(std::vector<GLuint>& indices);
+	 * @fn	EBO::EBO(const std::vector<GLuint>& indices);
 	 *
 	 * @summary	Constructor.
 	 *
@@ -16,21 +17,7 @@ public:
 	 *
 	 * ### param 	 	size	The size.
 	 */
-	EBO(std::vector<GLuint>& indices);
-
-	/**
-	 * @fn	virtual void EBO::bind();
-	 *
-	 * @brief	Binds this object to the current context
-	 */
-	virtual void bind() const;
-
-	/**
-	 * @fn	virtual void EBO::unbind();
-	 *
-	 * @brief	Unbinds this object of the current context
-	 */
-	virtual void unbind() const;
+	EBO(const std::vector<GLuint>& indices);
 
 	/**
 	 * @fn	virtual void EBO::destroy();

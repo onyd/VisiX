@@ -7,3 +7,5 @@ class Light  {
 	private:
 
 };
+
+typedef std::shared_ptr<Light> LightPtr;

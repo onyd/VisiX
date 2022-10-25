@@ -8,7 +8,10 @@ class Buffer : public GLObject
 {
 public:
 	template <class T>
-	Buffer(const std::vector<T>& initial_data, GLuint mode = GL_STATIC_DRAW);
+	Buffer(const std::vector<T>& initial_data, GLuint mode = GL_STATIC_DRAW, GLuint buffer_type = GL_ARRAY_BUFFER);
+
+	template <class T>
+	void setData(const std::vector<T>& data, GLuint mode) const;
 
 	/**
 	 * @fn	inline virtual void Buffer::destroy();
@@ -44,15 +47,23 @@ public:
 	 * @brief	Unbinds this object of the current context
 	 */
 	inline virtual void unbindBase(GLuint location) const;
-
+protected:
+	GLuint m_buffer_type;
 };
 
 template <class T>
-Buffer::Buffer(const std::vector<T>& initial_data, GLuint mode)
+Buffer::Buffer(const std::vector<T>& initial_data, GLuint mode, GLuint buffer_type) : m_buffer_type(buffer_type)
 {
 	glGenBuffers(1, &m_id);
-	glBindBuffer(GL_ARRAY_BUFFER, m_id);
-	glBufferData(GL_ARRAY_BUFFER, initial_data.size() * sizeof(T), &initial_data[0], mode);
+	setData(initial_data, mode);
+}
+
+template <class T>
+void Buffer::setData(const std::vector<T>& data, GLuint mode) const
+{
+	bind();
+	glBufferData(m_buffer_type, data.size() * sizeof(T), &data[0], mode);
+	unbind();
 }
 
 void Buffer::destroy()
@@ -62,7 +73,7 @@ void Buffer::destroy()
 
 void Buffer::bind() const
 {
-	glBindBuffer(GL_ARRAY_BUFFER, m_id);
+	glBindBuffer(m_buffer_type, m_id);
 }
 
 void Buffer::bindBase(GLuint location) const
@@ -72,7 +83,7 @@ void Buffer::bindBase(GLuint location) const
 
 void Buffer::unbind() const
 {
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(m_buffer_type, 0);
 }
 
 void Buffer::unbindBase(GLuint location) const

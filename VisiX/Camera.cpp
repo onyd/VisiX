@@ -75,11 +75,11 @@ void Camera::handleInputs(GLFWwindow* window, float dt)
 		float rotY = dt * m_sensitivity * (float)(mouseX - (m_width / 2)) / m_width;
 
 		// Compute x rotation
-		glm::vec3 newm_forward = glm::rotate(m_forward, glm::radians(-rotX), m_right);
+		glm::vec3 new_forward = glm::rotate(m_forward, glm::radians(-rotX), m_right);
 
 		// Avoid gimbal lock issue by preventing m_forward from being vertical
-		if ((abs(glm::angle(newm_forward, m_world_up) - glm::radians(90.0f)) <= glm::radians(85.0f))) {
-			m_forward = newm_forward;
+		if ((abs(glm::angle(new_forward, m_world_up) - glm::radians(90.0f)) <= glm::radians(85.0f))) {
+			m_forward = new_forward;
 		}
 
 		// Apply y rotation

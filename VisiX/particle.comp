@@ -2,13 +2,13 @@
 
 layout( local_size_x = 32 ) in; 
  
-uniform float Gravity1 = 100.0; 
+uniform float Gravity1 = 200.0; 
 uniform vec3 BlackHolePos1 = vec3(-5.0, 0.0, 0.0); 
-uniform float Gravity2 = 100.0; 
+uniform float Gravity2 = 200.0; 
 uniform vec3 BlackHolePos2 = vec3(5.0, 0.0, 0.0); 
  
-uniform float ParticleInvMass = 1.0 / 2.0; 
-uniform float DeltaT = 0.0005; 
+uniform float ParticleInvMass = 1.0 / 4.0; 
+uniform float dt; 
  
 layout(std430, binding=0) buffer Pos { 
   vec4 Position[]; 
@@ -22,6 +22,8 @@ void main() {
  
   vec3 p = Position[idx].xyz; 
   vec3 v = Velocity[idx].xyz; 
+
+  float h = 0.1 * dt;
  
   // Force from black hole #1 
   vec3 d = BlackHolePos1 - p; 
@@ -34,6 +36,6 @@ void main() {
   // Apply simple Euler integrator 
   vec3 a = force * ParticleInvMass; 
   Position[idx] = vec4( 
-        p + v * DeltaT + 0.5 * a * DeltaT * DeltaT, 1.0); 
-  Velocity[idx] = vec4( v + a * DeltaT, 0.0); 
+        p + v * h + 0.5 * a * h * h, 1.0); 
+  Velocity[idx] = vec4( v + a * h, 0.0); 
 } 

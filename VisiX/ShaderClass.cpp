@@ -17,13 +17,13 @@ std::string getFileContents(const char* filename) {
 Shader::Shader(const char* vertex_source, const char* fragment_source) {
 	// Compile vertex shader
 	GLuint vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertex_shader, 1, &vertex_source, NULL);
+	glShaderSource(vertex_shader, 1, &vertex_source, nullptr);
 	glCompileShader(vertex_shader);
 	compileErrors(vertex_shader, "VERTEX");
 
 	// Compile fragment shader
 	GLuint fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragment_shader, 1, &fragment_source, NULL);
+	glShaderSource(fragment_shader, 1, &fragment_source, nullptr);
 	glCompileShader(fragment_shader);
 	compileErrors(fragment_shader, "FRAGMENT");
 
@@ -74,7 +74,7 @@ void Shader::compileErrors(unsigned int shader, const char* type)
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &has_compiled);
 		if (has_compiled == GL_FALSE)
 		{
-			glGetShaderInfoLog(shader, 1024, NULL, info_log);
+			glGetShaderInfoLog(shader, 1024, nullptr, info_log);
 			std::cout << "SHADER_COMPILATION_ERROR for:" << type << "\n" << info_log << std::endl;
 		}
 	}
@@ -83,7 +83,7 @@ void Shader::compileErrors(unsigned int shader, const char* type)
 		glGetProgramiv(shader, GL_LINK_STATUS, &has_compiled);
 		if (has_compiled == GL_FALSE)
 		{
-			glGetProgramInfoLog(shader, 1024, NULL, info_log);
+			glGetProgramInfoLog(shader, 1024, nullptr, info_log);
 			std::cout << "SHADER_LINKING_ERROR for:" << type << "\n" << info_log << std::endl;
 		}
 	}
@@ -93,8 +93,26 @@ ComputeShader::ComputeShader(const char* source, const std::vector<Buffer>& buff
 {
 	// Compile compute shader
 	GLuint compute_shader = glCreateShader(GL_COMPUTE_SHADER);
-	glShaderSource(compute_shader, 1, &source, NULL);
+	glShaderSource(compute_shader, 1, &source, nullptr);
 	glCompileShader(compute_shader);
+
+	// Error check
+	GLint has_compiled;
+	glGetProgramiv(compute_shader, GL_COMPILE_STATUS, &has_compiled);
+	if (has_compiled == GL_FALSE)
+	{
+		GLint max_length = 0;
+		glGetShaderiv(compute_shader, GL_INFO_LOG_LENGTH, &max_length);
+
+		std::vector<GLchar> error_log(max_length);
+		glGetShaderInfoLog(compute_shader, max_length, nullptr, &error_log[0]);
+		if (error_log.size() > 0) {
+			std::cout << "SHADER_LINKING_ERROR for COMPUTE SHADER\n" << error_log.data() << std::endl;
+
+			glDeleteShader(compute_shader);
+			return;
+		}
+	}
 
 	// Create usable shader program from compute shader
 	m_id = glCreateProgram();

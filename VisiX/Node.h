@@ -4,61 +4,72 @@
 #include <memory>
 #include <glm/glm.hpp>
 
+#include "Renderable.h"
+
 class Shader;
 class Camera;
 class BaseFX;
 
-typedef std::shared_ptr<Shader> shader_ptr_t;
+typedef std::shared_ptr<Shader> ShaderPtr;
 
-class Movable {
-	public:
-		inline void move(const glm::vec3& t) {
-			m_pos += t;
-		}
+class Movable 
+{
+public:
+	inline void move(const glm::vec3& t) {
+		m_pos += t;
+	}
 
-		inline void setPos(const glm::vec3& pos) {
-			m_pos = pos;
-		}
-	protected:
-		glm::vec3 m_pos;
+	inline void setPos(const glm::vec3& pos) {
+		m_pos = pos;
+	}
+protected:
+	glm::vec3 m_pos;
 };
 
-class Orientable {
+class Orientable 
+{
 	// TODO
 };
 
-class Scalable {
+class Scalable 
+{
 	// TODO
 };
 
-class Node {
-	public:
-		Node();
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
 
-		Node(Node* parent);
+class Node 
+{
+public:
+	Node();
 
-		~Node();
+	Node(const NodePtr& parent);
 
-		void addNode(Node* node);
-		void removeNode(Node* node);
+	void addNode(const NodePtr& node);
+	void removeNode(const NodePtr& node);
 
-		virtual void draw(const Shader& shader, const Camera& camera) const;
+	virtual void draw(const Camera& camera) const;
 
-	protected:
-
-		inline Node* getParent() const {
-			return m_parent;
-		}
-
-		inline void setParent(Node* parent) {
-			m_parent = parent;
-		}
-
-		std::unordered_set<Node*> m_children;
-		Node* m_parent;
+protected:
+	std::unordered_set<NodePtr> m_children;
 };
 
-class TransformNode : public Node, public Movable, public Orientable, public Scalable {
-	public:
-		virtual void draw(const Shader& shader, const Camera& camera) const;
+class TransformNode : public Node, public Movable, public Orientable, public Scalable 
+{
+public:
+	glm::mat4 getModelViewMatrix() const;
+};
+
+class RenderableNode : public Node
+{
+public:
+	RenderableNode() = default;
+
+	void addRenderable(const RenderablePtr& renderable);
+
+	virtual void draw(const Camera& camera) const;
+
+protected:
+	std::vector<std::shared_ptr<Renderable>> m_renderables;
 };

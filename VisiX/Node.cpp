@@ -1,45 +1,45 @@
+#include "Node.h"
+
 #include <iostream>
 
-#include "Node.h"
 #include "ShaderClass.h"
 
-Node::Node() : m_parent(NULL)
+Node::Node()
 {
 }
 
-Node::Node(Node* parent) : m_parent(parent)
+void Node::draw(const Camera& camera) const
 {
-}
-
-Node::~Node()
-{
-	for (auto child : m_children) {
-		delete child;
+	for (auto& child : m_children) {
+		child->draw(camera);
 	}
 }
 
-void Node::addNode(Node* node)
+void Node::addNode(const NodePtr& node)
 {
 	if (!m_children.contains(node)) {
 		m_children.insert(node);
-		node->setParent(this);
 	}
 }
 
-void Node::removeNode(Node* node)
+void Node::removeNode(const NodePtr& node)
 {
 	m_children.erase(node);
-	node; setParent(NULL);
 }
 
-void Node::draw(const Shader& shader, const Camera& camera) const
+glm::mat4 TransformNode::getModelViewMatrix() const
 {
-	for (auto& child : m_children) {
-		child->draw(shader, camera);
+	return glm::mat4(1.0);
+}
+
+void RenderableNode::addRenderable(const RenderablePtr& renderable)
+{
+	m_renderables.emplace_back(renderable);
+}
+
+void RenderableNode::draw(const Camera& camera) const
+{
+	for (auto& renderable : m_renderables) {
+		renderable->draw(camera);
 	}
-}
-
-void TransformNode::draw(const Shader& shader, const Camera& camera) const
-{
-
 }

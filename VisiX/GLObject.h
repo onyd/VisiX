@@ -8,13 +8,6 @@ public:
 	GLuint m_id;
 
 	/**
-	 * @fn	GLObject::GLObject();
-	 *
-	 * @brief	Default constructor
-	 */
-	GLObject();
-
-	/**
 	 * @fn	virtual void GLObject::destroy()=0;
 	 *
 	 * @brief	Destroys this object

@@ -97,6 +97,9 @@
     <Filter Include="Source Files\graphics\rendering\FX">
       <UniqueIdentifier>{38c8c23b-1f26-4043-aafc-cb7cedc43045}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resource Files\shaders\attractor">
+      <UniqueIdentifier>{fdef4776-07af-4930-8308-081bdb986a34}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -106,9 +109,6 @@
       <Filter>Source Files\graphics\rendering\object</Filter>
     </ClCompile>
     <ClCompile Include="EBO.cpp">
-      <Filter>Source Files\graphics\rendering\GL</Filter>
-    </ClCompile>
-    <ClCompile Include="GLObject.cpp">
       <Filter>Source Files\graphics\rendering\GL</Filter>
     </ClCompile>
     <ClCompile Include="Mesh.cpp">
@@ -144,6 +144,18 @@
     <ClCompile Include="Attribute.cpp">
       <Filter>Source Files\graphics\rendering\GL</Filter>
     </ClCompile>
+    <ClCompile Include="Viewer.cpp">
+      <Filter>Source Files\graphics\rendering\scene</Filter>
+    </ClCompile>
+    <ClCompile Include="DynamicSystem.cpp">
+      <Filter>Source Files\physics</Filter>
+    </ClCompile>
+    <ClCompile Include="Solid.cpp">
+      <Filter>Source Files\physics</Filter>
+    </ClCompile>
+    <ClCompile Include="particle_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="planksSpec.png">
@@ -177,6 +189,24 @@
     </None>
     <None Include="particle.frag">
       <Filter>Resource Files\shaders</Filter>
+    </None>
+    <None Include="lorenz.comp">
+      <Filter>Resource Files\shaders\attractor</Filter>
+    </None>
+    <None Include="orbiting.comp">
+      <Filter>Resource Files\shaders\attractor</Filter>
+    </None>
+    <None Include="sprott.comp">
+      <Filter>Resource Files\shaders\attractor</Filter>
+    </None>
+    <None Include="three_scroll.comp">
+      <Filter>Resource Files\shaders\attractor</Filter>
+    </None>
+    <None Include="thomas.comp">
+      <Filter>Resource Files\shaders\attractor</Filter>
+    </None>
+    <None Include="lorenz2.comp">
+      <Filter>Resource Files\shaders\attractor</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -227,6 +257,15 @@
     </ClInclude>
     <ClInclude Include="Buffer.h">
       <Filter>Header Files\graphics\rendering\GL</Filter>
+    </ClInclude>
+    <ClInclude Include="Viewer.h">
+      <Filter>Header Files\graphics\rendering\scene</Filter>
+    </ClInclude>
+    <ClInclude Include="DynamicSystem.h">
+      <Filter>Header Files\physics</Filter>
+    </ClInclude>
+    <ClInclude Include="Solid.h">
+      <Filter>Header Files\physics</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

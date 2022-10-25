@@ -1,32 +1,33 @@
 #include "Mesh.h"
 #include "Camera.h"
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<GLuint> indices, std::vector<Texture> textures)
-	: m_vertices(vertices), m_indices(indices), m_textures(textures)
+
+Mesh::Mesh(const std::vector<Vertex>& vertices, const std::vector<GLuint>& indices, const std::vector<Texture>& textures)
+	: m_vertices(vertices), m_indices(indices), m_textures(textures), m_vbo(vertices), m_ebo(indices)
 {
 	// Create the vertex array
-	vao.bind();
+	m_vao.bind();
+	m_vbo.bind();
+	m_ebo.bind();
 
 	// Create the vertex buffer and the indices buffer
-	Buffer vbo(vertices);
-	EBO ebo(indices);
 
 	// Link the VAO to the VBO
-	vao.linkAttribute(vbo, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
-	vao.linkAttribute(vbo, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)(3 * sizeof(float)));
-	vao.linkAttribute(vbo, 2, 3, GL_FLOAT, sizeof(Vertex), (void*)(6 * sizeof(float)));
-	vao.linkAttribute(vbo, 3, 2, GL_FLOAT, sizeof(Vertex), (void*)(9 * sizeof(float)));
+	m_vao.linkAttribute(m_vbo, 0, 3, GL_FLOAT, sizeof(Vertex), (void*)0);
+	m_vao.linkAttribute(m_vbo, 1, 3, GL_FLOAT, sizeof(Vertex), (void*)(3 * sizeof(float)));
+	m_vao.linkAttribute(m_vbo, 2, 3, GL_FLOAT, sizeof(Vertex), (void*)(6 * sizeof(float)));
+	m_vao.linkAttribute(m_vbo, 3, 2, GL_FLOAT, sizeof(Vertex), (void*)(9 * sizeof(float)));
 
 	// unbind all
-	vao.unbind();
-	vbo.unbind();
-	ebo.unbind();
+	m_vao.unbind();
+	m_vbo.unbind();
+	m_ebo.unbind();
 }
 
 void Mesh::draw(const Shader& shader, const Camera& camera) const
 {
 	shader.activate();
-	vao.bind();
+	m_vao.bind();
 
 	unsigned int n_diffuse = 0;
 	unsigned int n_specular = 0;
@@ -49,4 +50,19 @@ void Mesh::draw(const Shader& shader, const Camera& camera) const
 	camera.exportMatrix(shader, "cameraMatrix");
 
 	glDrawElements(GL_TRIANGLES, m_indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void Mesh::update() const
+{
+	m_vbo.setData(m_vertices, GL_STATIC_DRAW);
+}
+
+const std::vector<Vertex>& Mesh::verticies() const
+{
+	return m_vertices;
+}
+
+std::vector<Vertex>& Mesh::verticies()
+{
+	return m_vertices;
 }
