@@ -22,5 +22,5 @@ public:
 
 private:
 	float m_h;
-	std::vector<std::pair<SolidPtr, glm::vec3>> m_solids_dstates;
+	std::vector<std::pair<SolidPtr, State>> m_solids_dstates;
 };

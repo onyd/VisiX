@@ -7,6 +7,12 @@
 
 class Viewer;
 
+struct State
+{
+	glm::vec2 m_position;
+	float m_angle;
+};
+
 class Solid
 {
 public:
@@ -17,10 +23,12 @@ public:
 	virtual void render(Viewer& viewer) = 0;
 	virtual void update() = 0;
 
-	void transform(const glm::vec3& dstate);
+	void translate(const glm::vec2& t);
+	void rotate(float a);
 
 protected:
-	glm::vec3 m_state;
+	State m_state;
+	std::vector<glm::vec3> m_verticies;
 	std::shared_ptr<MeshRenderable> m_mesh_renderable;
 	Shader m_shader;
 };

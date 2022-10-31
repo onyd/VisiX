@@ -21,7 +21,7 @@ const int height = 1600;
 int main() {
 	Viewer viewer(width, height);
 
-	std::shared_ptr<SolidDynamicSystem> dynamic_system = std::make_shared<SolidDynamicSystem>(0.0001);
+	std::shared_ptr<SolidDynamicSystem> dynamic_system = std::make_shared<SolidDynamicSystem>(0.0005);
 	viewer.addDynamicSystem(dynamic_system);
 
 	Rectangle r1(glm::vec2(0.0, 0.0), 1.0, 1.0, 0.0, glm::vec3(1.0, 1.0, 1.0));

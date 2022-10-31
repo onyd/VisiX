@@ -4,31 +4,43 @@
 #include "Attribute.h"
 
 Solid::Solid(const glm::vec2& position, float angle) 
-	: m_state(glm::vec3(position, angle)), m_shader(Shader::from_file("default.vert", "default.frag"))
+	: m_state({ position, angle }), m_shader(Shader::from_file("default.vert", "default.frag"))
 {
 }
 
 glm::mat4 Solid::getModelViewMatrix() const
 {
-	return glm::mat4(cos(m_state.z), -sin(m_state.z), 0.0, m_state.x,
-					 sin(m_state.z), cos(m_state.z), 0.0, m_state.y,
-					 0.0, 0.0, 1.0, 0.0,
-					 0.0, 0.0, 0.0, 1.0);
+	return glm::mat4(cos(m_state.m_angle), -sin(m_state.m_angle), 0.0, m_state.m_position.x,
+					 sin(m_state.m_angle), cos(m_state.m_angle),  0.0, m_state.m_position.y,
+					 0.0,				   0.0,				      1.0, 0.0,
+					 0.0,				   0.0,					  0.0, 1.0);
 }
 
-void Solid::transform(const glm::vec3& dstate)
+void Solid::translate(const glm::vec2& t)
 {
-	m_state += dstate;
+	m_state.m_position += t;
+}
+
+void Solid::rotate(float a)
+{
+	m_state.m_angle += a;
 }
 
 Rectangle::Rectangle(const glm::vec2& position, float width, float height, float angle, const glm::vec3& color)
 	: Solid(position, angle), m_width(width), m_height(height), m_color(color)
 {
+	// Keep original model verticies
+	m_verticies = { glm::vec3(-m_width / 2.0f, -m_height / 2.0f, 0.0f),
+					glm::vec3(+m_width / 2.0f, -m_height / 2.0f, 0.0f),
+					glm::vec3(+m_width / 2.0f, +m_height / 2.0f, 0.0f),
+					glm::vec3(-m_width / 2.0f, +m_height / 2.0f, 0.0f) };
+
+	// Initialize mesh
 	std::vector<Vertex> verticies = {
-		{ Vertex{ glm::vec3(-m_width / 2.0f, -m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color, glm::vec2(0.0f, 0.0f)} },
-		{ Vertex{ glm::vec3(+m_width / 2.0f, -m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color, glm::vec2(0.0f, 1.0f)} },
-		{ Vertex{ glm::vec3(+m_width / 2.0f, +m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color, glm::vec2(1.0f, 1.0f)} },
-		{ Vertex{ glm::vec3(-m_width / 2.0f, +m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color, glm::vec2(1.0f, 0.0f)} }
+		{ Vertex{ glm::vec3(-m_width / 2.0f, -m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color} },
+		{ Vertex{ glm::vec3(+m_width / 2.0f, -m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color} },
+		{ Vertex{ glm::vec3(+m_width / 2.0f, +m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color} },
+		{ Vertex{ glm::vec3(-m_width / 2.0f, +m_height / 2.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f), m_color} }
 	};
 	std::vector<GLuint> indicies = { 0, 1, 2,
 								     0, 2, 3 };
@@ -53,8 +65,10 @@ void Rectangle::render(Viewer& viewer)
 
 void Rectangle::update()
 {
-	for (auto& v : m_mesh_renderable->getMesh().verticies()) {
-		v.m_position = glm::vec3(glm::vec4(v.m_position, 1.0) * getModelViewMatrix());
+	// Apply transformations (translation and rotation) and update mesh verticies
+	auto& mesh_verticies = m_mesh_renderable->getMesh().verticies();
+	for (int i = 0; i < mesh_verticies.size(); i++) {
+		mesh_verticies[i].m_position = glm::vec3(glm::vec4(m_verticies[i], 1.0) * getModelViewMatrix());
 	}
 	m_mesh_renderable->getMesh().update();
 }
