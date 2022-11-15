@@ -144,11 +144,13 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DynamicSystem.cpp" />
     <ClCompile Include="EBO.cpp" />
+    <ClCompile Include="GJK.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="Node.cpp" />
     <ClCompile Include="particle_test.cpp" />
+    <ClCompile Include="Polytope.cpp" />
     <ClCompile Include="Renderable.cpp" />
     <ClCompile Include="Scene.cpp" />
     <ClCompile Include="ShaderClass.cpp" />
@@ -185,10 +187,13 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="DynamicSystem.h" />
     <ClInclude Include="EBO.h" />
+    <ClInclude Include="GJK.h" />
     <ClInclude Include="GLObject.h" />
     <ClInclude Include="Light.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Node.h" />
+    <ClInclude Include="Point.h" />
+    <ClInclude Include="Polytope.h" />
     <ClInclude Include="Property.h" />
     <ClInclude Include="Renderable.h" />
     <ClInclude Include="Scene.h" />

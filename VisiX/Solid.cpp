@@ -26,14 +26,25 @@ void Solid::rotate(float a)
 	m_state.m_angle += a;
 }
 
+Polygon Solid::getPolygon() const
+{
+	auto& mesh_verticies = m_mesh_renderable->getMesh().verticies();
+	Points2 points;
+	points.reserve(mesh_verticies.size());
+	for (const auto& p : mesh_verticies)
+		points.push_back(p.m_position);
+
+	return Polygon(points);
+}
+
 Rectangle::Rectangle(const glm::vec2& position, float width, float height, float angle, const glm::vec3& color)
 	: Solid(position, angle), m_width(width), m_height(height), m_color(color)
 {
 	// Keep original model verticies
-	m_verticies = { glm::vec3(-m_width / 2.0f, -m_height / 2.0f, 0.0f),
-					glm::vec3(+m_width / 2.0f, -m_height / 2.0f, 0.0f),
-					glm::vec3(+m_width / 2.0f, +m_height / 2.0f, 0.0f),
-					glm::vec3(-m_width / 2.0f, +m_height / 2.0f, 0.0f) };
+	m_verticies = { glm::vec2(-m_width / 2.0f, -m_height / 2.0f),
+					glm::vec2(+m_width / 2.0f, -m_height / 2.0f),
+					glm::vec2(+m_width / 2.0f, +m_height / 2.0f),
+					glm::vec2(-m_width / 2.0f, +m_height / 2.0f) };
 
 	// Initialize mesh
 	std::vector<Vertex> verticies = {
@@ -68,7 +79,7 @@ void Rectangle::update()
 	// Apply transformations (translation and rotation) and update mesh verticies
 	auto& mesh_verticies = m_mesh_renderable->getMesh().verticies();
 	for (int i = 0; i < mesh_verticies.size(); i++) {
-		mesh_verticies[i].m_position = glm::vec3(glm::vec4(m_verticies[i], 1.0) * getModelViewMatrix());
+		mesh_verticies[i].m_position = glm::vec3(glm::vec4(m_verticies[i], 0.0, 1.0) * getModelViewMatrix());
 	}
 	m_mesh_renderable->getMesh().update();
 }

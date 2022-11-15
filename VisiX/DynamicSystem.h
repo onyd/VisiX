@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Solid.h"
+#include "GJK.h"
 
 #define g 9.81
 
@@ -23,4 +24,15 @@ public:
 private:
 	float m_h;
 	std::vector<std::pair<SolidPtr, State>> m_solids_dstates;
+};
+
+class CollisionDynamicSystem : public DynamicSystemBase
+{
+public:
+	virtual void step();
+	void addCollisionRule(const Solid& solid1, const Solid& solid2);
+
+private:
+	std::vector<std::pair<const Solid&, const Solid&>> m_collision_rules;
+	GJK m_collision_engine;
 };

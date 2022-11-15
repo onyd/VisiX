@@ -4,6 +4,7 @@
 
 #include "Mesh.h"
 #include "Renderable.h"
+#include "Polytope.h"
 
 class Viewer;
 
@@ -26,9 +27,11 @@ public:
 	void translate(const glm::vec2& t);
 	void rotate(float a);
 
+	Polygon getPolygon() const;
+
 protected:
 	State m_state;
-	std::vector<glm::vec3> m_verticies;
+	Points2 m_verticies;
 	std::shared_ptr<MeshRenderable> m_mesh_renderable;
 	Shader m_shader;
 };
