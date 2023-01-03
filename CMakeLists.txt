@@ -1,95 +1,79 @@
-cmake_minimum_required( VERSION 3.16 )
+cmake_minimum_required(VERSION 3.14)
 
-project( VisiX )
+project(VisiX VERSION 0.1 LANGUAGES CXX)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package( OpenGL REQUIRED )
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets Gui)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets Gui)
+add_subdirectory(libs/QCodeEditor)
 
-include_directories( ${OPENGL_INCLUDE_DIRS} )
+set(PROJECT_SOURCES
+    resources/demo_resources.qrc
+    main.cpp
+    src/MainWindow.cpp
+    src/SceneExplorer.cpp
+    src/ShapeCreationDialog.cpp
+)
 
-set( GLFW_BUILD_DOCS OFF CACHE BOOL  "GLFW lib only" )
-set( GLFW_INSTALL OFF CACHE BOOL  "GLFW lib only" )
+set(PROJECT_HEADERS
+    include/MainWindow.hpp
+    include/SceneExplorer.h
+    include/ShapeCreationDialog.h
+)
 
-add_subdirectory( glfw )
-
-if( MSVC )
-    SET( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /ENTRY:mainCRTStartup" )
+if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt_add_executable(VisiX
+        MANUAL_FINALIZATION
+        ${PROJECT_SOURCES} ${PROJECT_HEADERS}
+    )
+# Define target properties for Android with Qt 6 as:
+#    set_property(TARGET VisiX APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
+#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
+# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
+else()
+    if(ANDROID)
+        add_library(VisiX SHARED
+            ${PROJECT_SOURCES} ${PROJECT_HEADERS}
+        )
+# Define properties for Android with Qt 5 after find_package() calls as:
+#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
+    else()
+        add_executable(VisiX
+          ${PROJECT_SOURCES} ${PROJECT_HEADERS}
+        )
+    endif()
 endif()
 
-##include
-include_directories(${CMAKE_SOURCE_DIR}/include)
-include_directories(${CMAKE_SOURCE_DIR}/include/rendering)
-include_directories(${CMAKE_SOURCE_DIR}/include/maths)
-include_directories(${CMAKE_SOURCE_DIR}/include/maths/geometry)
-include_directories(${CMAKE_SOURCE_DIR}/include/utils)
+target_include_directories(VisiX PUBLIC
+    include
+)
 
-include_directories(${CMAKE_SOURCE_DIR}/glfw/include/GLFW)
-include_directories(${CMAKE_SOURCE_DIR}/include/lib)
+target_link_libraries(VisiX
+  PRIVATE Qt${QT_VERSION_MAJOR}::Core
+          Qt${QT_VERSION_MAJOR}::Quick
+          Qt${QT_VERSION_MAJOR}::Widgets
+          Qt${QT_VERSION_MAJOR}::Gui
+          QCodeEditor)
 
-## src
-set(RENDERING_SRCS
-    ${CMAKE_SOURCE_DIR}/src/rendering/Camera.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Uniform.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Buffer.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/EBO.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Mesh.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Particles.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Node.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Drawer.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Renderable.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Object.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Scene.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/ShaderClass.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Texture.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/VAO.cpp
-    ${CMAKE_SOURCE_DIR}/src/rendering/Viewer.cpp)
+set_target_properties(VisiX PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+    MACOSX_BUNDLE TRUE
+    WIN32_EXECUTABLE TRUE
+)
 
-set(MATHS_SRCS
-    )
+install(TARGETS VisiX
+    BUNDLE DESTINATION .
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-## set(UTILS_SRCS )
-
-set(LIB_SRCS
-    ${CMAKE_SOURCE_DIR}/src/lib/stb.cpp)
-
-## header
-set(RENDERING_HDRS
-    ${CMAKE_SOURCE_DIR}/include/rendering/Vertex.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Movable.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Uniform.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Buffer.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/GLObject.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Camera.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/EBO.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Mesh.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Particles.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Node.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Drawer.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Renderable.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Object.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Scene.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/ShaderClass.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Texture.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/VAO.h
-    ${CMAKE_SOURCE_DIR}/include/rendering/Viewer.h)
-
-set(MATHS_HDRS
-    )
-
-
-## glad
-add_library(glad ${CMAKE_SOURCE_DIR}/src/lib/glad.c)
-target_include_directories(glad PUBLIC ${CMAKE_SOURCE_DIR}/src)
-
-
-## executable
-add_executable( VisiX ${CMAKE_SOURCE_DIR}/src/main.cpp ${RENDERING_SRCS} ${MATHS_SRCS} ${LIB_SRCS} ${RENDERING_HDRS} ${MATHS_HDRS})
-target_link_libraries( VisiX ${OPENGL_LIBRARIES} glfw glad)
-if( MSVC )
-    if(${CMAKE_VERSION} VERSION_LESS "3.6.0") 
-        message( "\n\t[ WARNING ]\n\n\tCMake version lower than 3.6.\n\n\t - Please update CMake and rerun; OR\n\t - Manually set 'VisiX' as StartUp Project in Visual Studio.\n" )
-    else()
-        set_property( DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT VisiX )
-    endif()
+if(QT_VERSION_MAJOR EQUAL 6)
+    qt_import_qml_plugins(VisiX)
+    qt_finalize_executable(VisiX)
 endif()
