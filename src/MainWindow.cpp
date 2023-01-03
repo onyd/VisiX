@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget* parent) :
     m_shader_editor(nullptr),
     m_style(nullptr)
 {
+    resize(1200, 800);
     setupWidgets();
     performConnections();
 }

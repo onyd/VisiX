@@ -19,12 +19,14 @@ set(PROJECT_SOURCES
     src/MainWindow.cpp
     src/SceneExplorer.cpp
     src/ShapeCreationDialog.cpp
+    src/LeftTabWidget.cpp
 )
 
 set(PROJECT_HEADERS
     include/MainWindow.hpp
     include/SceneExplorer.h
     include/ShapeCreationDialog.h
+    include/LeftTabWidget.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
