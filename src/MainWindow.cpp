@@ -16,9 +16,32 @@ MainWindow::MainWindow(QWidget* parent) :
     m_shader_editor(nullptr),
     m_style(nullptr)
 {
+    auto container = new QWidget(this);
+    setCentralWidget(container);
     resize(2000, 1200);
-    setupWidgets();
-    performConnections();
+
+    // Main view 
+    auto main_hbox = new QHBoxLayout(container);
+
+    m_scene_explorer = new SceneExplorer(this);
+    m_scene_explorer->setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Minimum);
+    main_hbox->addWidget(m_scene_explorer);
+
+    auto editor_vbox = new QVBoxLayout(this);
+    main_hbox->addLayout(editor_vbox);
+
+    m_shader_editor = new QCodeEditor(this);
+    m_shader_editor->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    editor_vbox->addWidget(m_shader_editor);
+
+    // Default parameters
+    setWindowTitle("VisiX");
+    setStyle(":/styles/drakula.xml");
+    m_shader_editor->setPlainText(loadCode(":/code_samples/shader.glsl"));
+    m_shader_editor->setSyntaxStyle(m_style);
+    m_shader_editor->setCompleter(new QGLSLCompleter(this));
+    m_shader_editor->setHighlighter(new QGLSLHighlighter);
+
 }
 
 QString MainWindow::loadCode(QString path)
@@ -53,33 +76,3 @@ void MainWindow::setStyle(QString path)
     m_style = style;
 }
 
-void MainWindow::setupWidgets()
-{
-    // Layout
-    auto container = new QWidget(this);
-    setCentralWidget(container);
-
-    auto main_hbox = new QHBoxLayout(container);
-
-    m_scene_explorer = new SceneExplorer();
-    main_hbox->addWidget(m_scene_explorer);
-
-    auto editor_vbox = new QVBoxLayout();
-    main_hbox->addLayout(editor_vbox);
-
-    m_shader_editor = new QCodeEditor();
-    editor_vbox->addWidget(m_shader_editor);
-
-    // Default parameters
-    setWindowTitle("VisiX");
-    setStyle(":/styles/drakula.xml");
-    m_shader_editor->setPlainText(loadCode(":/code_samples/shader.glsl"));
-    m_shader_editor->setSyntaxStyle(m_style);
-    m_shader_editor->setCompleter(new QGLSLCompleter(this));
-    m_shader_editor->setHighlighter(new QGLSLHighlighter);
-}
-
-void MainWindow::performConnections()
-{
-
-}

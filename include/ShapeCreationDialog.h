@@ -6,6 +6,7 @@
 #include <QButtonGroup>>
 #include <QPushButton>
 #include <QFrame>
+#include <QTreeWidget>
 
 #include "LeftTabWidget.h"
 
@@ -14,13 +15,16 @@ class ShapeCreationDialog : public QDialog
     Q_OBJECT
 
 public:
-    ShapeCreationDialog(QWidget* parent = nullptr);
+    ShapeCreationDialog(QTreeWidgetItem* item, QWidget* parent = nullptr);
 
+    virtual int exec();
+    virtual void open();
 
+public slots:
+    void addShape(const QString& name);
 
 private:
-    LeftTabWidget* m_shape_creation_tabs;
-
+    QTreeWidgetItem* m_item;
 };
 
 #endif // SHAPECREATIONDIALOG_H

@@ -32,10 +32,6 @@ private:
 
     QString loadCode(QString path);
 
-    void setupWidgets();
-
-    void performConnections();
-
     // Scene explorer
     SceneExplorer* m_scene_explorer;
 

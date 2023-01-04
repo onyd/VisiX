@@ -19,6 +19,9 @@ public:
 
     void addTab(const QString& text, QWidget* content);
 
+    QPushButton* button(int index);
+    QWidget* content(int index);
+
 public slots:
     void switchTab(int index);
 

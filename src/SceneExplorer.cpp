@@ -30,14 +30,15 @@ SceneExplorer::SceneExplorer(QWidget* parent)
 void SceneExplorer::openActionsMenu(const QPoint& pos)
 {
     // Actions
-    QAction *new_shape_action = new QAction(QIcon("/resources/icons/plus.png"), tr("&Add shape"), this);
+    QAction *new_shape_action = new QAction(QIcon("/resources/icons/add.png"), tr("&Add shape"), this);
     new_shape_action->setStatusTip(tr("Open shape creation window."));
 
-    QAction *remove_shape_action = new QAction(QIcon("/resources/icons/plus.png"), tr("&Remove"), this);
+    QAction *remove_shape_action = new QAction(QIcon("/resources/icons/remove.png"), tr("&Remove"), this);
     remove_shape_action->setStatusTip(tr("Remove selected hierarchy."));
 
     // Connections
-    auto shape_dialog = new ShapeCreationDialog();
+    auto clicked = m_scene_root->itemAt(pos);
+    auto shape_dialog = new ShapeCreationDialog(clicked);
     connect(new_shape_action, &QAction::triggered, shape_dialog, &ShapeCreationDialog::exec);
     // TODO connect to remove
 
