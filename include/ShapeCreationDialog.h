@@ -2,6 +2,10 @@
 #define SHAPECREATIONDIALOG_H
 
 #include <QDialog>
+#include <QVBoxLayout>
+#include <QButtonGroup>>
+#include <QPushButton>
+#include <QFrame>
 
 class ShapeCreationDialog : public QDialog
 {
@@ -13,7 +17,6 @@ public:
 
 
 private:
-
 
 
 };
