@@ -7,6 +7,8 @@
 #include <QPushButton>
 #include <QFrame>
 
+#include "LeftTabWidget.h"
+
 class ShapeCreationDialog : public QDialog
 {
     Q_OBJECT
@@ -17,7 +19,7 @@ public:
 
 
 private:
-
+    LeftTabWidget* m_shape_creation_tabs;
 
 };
 

@@ -19,12 +19,16 @@ public:
 
     void addTab(const QString& text, QWidget* content);
 
+public slots:
+    void switchTab(int index);
 
 private:
     QFrame* m_tab_content;
-    QVBoxLayout* m_tab_layout;
+    QVBoxLayout* m_content_layout;
+    QWidget* m_current = nullptr;
 
-    QButtonGroup* m_tab_group;
+    QVBoxLayout* m_buttons_layout;
+    QButtonGroup* m_button_group;
 
     QVector<QPushButton*> m_tab_buttons;
     QVector<QWidget*> m_tabs;
