@@ -21,7 +21,7 @@ public:
     virtual void open();
 
 public slots:
-    void addShape(const QString& name);
+    void addShape(const QIcon& icon, const QString& name);
 
 private:
     void setup();

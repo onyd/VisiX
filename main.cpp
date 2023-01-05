@@ -6,8 +6,7 @@
 
 int main(int argc, char** argv)
 {
-    // Creating application
-    QApplication a(argc, argv);
+    QApplication app(argc, argv);
 
     // Creating main window
     MainWindow w;

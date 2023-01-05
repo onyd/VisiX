@@ -9,12 +9,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets Gui)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets Gui)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core QuickWidgets Widgets Gui)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Quick3D QuickWidgets Widgets Gui)
 add_subdirectory(libs/QCodeEditor)
 
 set(PROJECT_SOURCES
-    resources/demo_resources.qrc
+    resources/main.qrc
     main.cpp
     src/MainWindow.cpp
     src/SceneExplorer.cpp
@@ -58,7 +58,7 @@ target_include_directories(VisiX PUBLIC
 
 target_link_libraries(VisiX
   PRIVATE Qt${QT_VERSION_MAJOR}::Core
-          Qt${QT_VERSION_MAJOR}::Quick
+          Qt${QT_VERSION_MAJOR}::QuickWidgets
           Qt${QT_VERSION_MAJOR}::Widgets
           Qt${QT_VERSION_MAJOR}::Gui
           QCodeEditor)
