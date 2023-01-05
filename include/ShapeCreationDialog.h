@@ -15,7 +15,7 @@ class ShapeCreationDialog : public QDialog
     Q_OBJECT
 
 public:
-    ShapeCreationDialog(QTreeWidgetItem* item, QWidget* parent = nullptr);
+    ShapeCreationDialog(QTreeWidget* scene_root, QTreeWidgetItem* item = nullptr, QWidget* parent = nullptr);
 
     virtual int exec();
     virtual void open();
@@ -24,6 +24,9 @@ public slots:
     void addShape(const QString& name);
 
 private:
+    void setup();
+
+    QTreeWidget* m_scene_root;
     QTreeWidgetItem* m_item;
 };
 
