@@ -12,6 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core QuickWidgets Widgets Gui)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Quick3D QuickWidgets Widgets Gui)
 add_subdirectory(libs/QCodeEditor)
+add_subdirectory(libs/nodeeditor-3)
 
 set(PROJECT_SOURCES
     resources/main.qrc
