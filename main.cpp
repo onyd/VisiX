@@ -16,7 +16,8 @@ int main(int argc, char** argv)
     QTextStream in(&file);
 
     QMLTreeSitter parser;
-    parser.setSource(in.readAll());
+    QString source = in.readAll();
+    parser.setSource(source);
     parser.update();
 
     QApplication app(argc, argv);
