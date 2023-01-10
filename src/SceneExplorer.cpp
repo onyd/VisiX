@@ -27,10 +27,10 @@ void SceneExplorer::openActionsMenu(const QPoint& pos)
     auto clicked = m_scene_root->itemAt(pos);
 
     // Actions
-    QAction *new_shape_action = new QAction(QIcon("../resources/icons/shapes.png"), tr("&Add shape"), this);
+    QAction *new_shape_action = new QAction(QIcon(":/icons/shapes.png"), tr("&Add shape"), this);
     new_shape_action->setStatusTip(tr("Open shape creation window."));
 
-    QAction *remove_shape_action = new QAction(QIcon("../resources/icons/trash.png"), tr("&Remove"), this);
+    QAction *remove_shape_action = new QAction(QIcon(":/icons/trash.png"), tr("&Remove"), this);
     remove_shape_action->setStatusTip(tr("Remove selected object hierarchy."));
 
     // Connections

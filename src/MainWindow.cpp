@@ -53,7 +53,6 @@ MainWindow::MainWindow(QWidget* parent) :
     m_shader_editor->setSyntaxStyle(m_style);
     m_shader_editor->setCompleter(new QGLSLCompleter(this));
     m_shader_editor->setHighlighter(new QGLSLHighlighter);
-
 }
 
 QString MainWindow::loadCode(QString path)

@@ -64,10 +64,10 @@ void ShapeCreationDialog::setup()
     auto mesh_shape_layout = new QVBoxLayout(mesh_shape_tab);
     
     QList<QPushButton*> mesh_shape_buttons;
-    mesh_shape_buttons.append(new QPushButton(QIcon("../resources/icons/ball.png"), tr("&Ball")));
-    mesh_shape_buttons.append(new QPushButton(QIcon("../resources/icons/cube.png"), tr("&Cube")));
-    mesh_shape_buttons.append(new QPushButton(QIcon("../resources/icons/cuboid.png"), tr("&Cuboid")));
-    mesh_shape_buttons.append(new QPushButton(QIcon("../resources/icons/mesh.png"), tr("&Load mesh")));
+    mesh_shape_buttons.append(new QPushButton(QIcon(":/icons/ball.png"), tr("&Ball")));
+    mesh_shape_buttons.append(new QPushButton(QIcon(":/icons/cube.png"), tr("&Cube")));
+    mesh_shape_buttons.append(new QPushButton(QIcon(":/icons/cuboid.png"), tr("&Cuboid")));
+    mesh_shape_buttons.append(new QPushButton(QIcon(":/icons/mesh.png"), tr("&Load mesh")));
 
     for (auto button : mesh_shape_buttons) {
         button->setStyleSheet("Text-align:left"); // Left align text

@@ -1,5 +1,4 @@
-#ifndef LEFTTABWIDGET_H
-#define LEFTTABWIDGET_H
+#pragma once
 
 #include <QWidget>
 #include <QVBoxLayout>
@@ -36,5 +35,3 @@ private:
     QVector<QPushButton*> m_tab_buttons;
     QVector<QWidget*> m_tabs;
 };
-
-#endif // LEFTTABWIDGET_H

@@ -9,10 +9,20 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core QuickWidgets Widgets Gui)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Quick3D QuickWidgets Widgets Gui)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Core Quick3D QuickWidgets Widgets Gui)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick3D QuickWidgets Widgets Gui)
 add_subdirectory(libs/QCodeEditor)
 add_subdirectory(libs/nodeeditor-3)
+
+include_directories(libs/tree-sitter/lib/src)
+include_directories(libs/tree-sitter/lib/include)
+include_directories(libs/tree-sitter-qmljs/src/tree-sitter)
+
+set(LIB_SOURCES 
+    libs/tree-sitter/lib/src/lib.c
+    libs/tree-sitter-qmljs/src/parser.c
+    libs/tree-sitter-qmljs/src/scanner.c
+)
 
 set(PROJECT_SOURCES
     resources/main.qrc
@@ -21,6 +31,7 @@ set(PROJECT_SOURCES
     src/SceneExplorer.cpp
     src/ShapeCreationDialog.cpp
     src/LeftTabWidget.cpp
+    src/QMLTreeSitter.cpp
 )
 
 set(PROJECT_HEADERS
@@ -28,12 +39,13 @@ set(PROJECT_HEADERS
     include/SceneExplorer.h
     include/ShapeCreationDialog.h
     include/LeftTabWidget.h
+    include/QMLTreeSitter.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(VisiX
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES} ${PROJECT_HEADERS}
+        ${PROJECT_SOURCES} ${LIB_SOURCES} ${PROJECT_HEADERS}
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET VisiX APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -59,6 +71,7 @@ target_include_directories(VisiX PUBLIC
 
 target_link_libraries(VisiX
   PRIVATE Qt${QT_VERSION_MAJOR}::Core
+          Qt${QT_VERSION_MAJOR}::Quick3D
           Qt${QT_VERSION_MAJOR}::QuickWidgets
           Qt${QT_VERSION_MAJOR}::Widgets
           Qt${QT_VERSION_MAJOR}::Gui

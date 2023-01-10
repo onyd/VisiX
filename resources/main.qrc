@@ -8,5 +8,12 @@
         <file>code_samples/lua.lua</file>
         <file>code_samples/python.py</file>
         <file>qml/scene.qml</file>
+        <file>icons/ball.png</file>
+        <file>icons/cube.png</file>
+        <file>icons/cuboid.png</file>
+        <file>icons/mesh.png</file>
+        <file>icons/plus.png</file>
+        <file>icons/shapes.png</file>
+        <file>icons/trash.png</file>
     </qresource>
 </RCC>

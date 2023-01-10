@@ -1,5 +1,4 @@
-#ifndef SCENEEXPLORER_H
-#define SCENEEXPLORER_H
+#pragma once
 
 #include <QWidget>
 #include <QTreeWidget>
@@ -20,5 +19,3 @@ private:
 
     QTreeWidget* m_scene_root;
 };
-
-#endif // SCENEEXPLORER_H

@@ -1,5 +1,4 @@
-#ifndef SHAPECREATIONDIALOG_H
-#define SHAPECREATIONDIALOG_H
+#pragma once
 
 #include <QDialog>
 #include <QVBoxLayout>
@@ -29,5 +28,3 @@ private:
     QTreeWidget* m_scene_root;
     QTreeWidgetItem* m_item;
 };
-
-#endif // SHAPECREATIONDIALOG_H
