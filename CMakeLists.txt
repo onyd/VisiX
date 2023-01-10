@@ -31,7 +31,7 @@ set(PROJECT_SOURCES
     src/SceneExplorer.cpp
     src/ShapeCreationDialog.cpp
     src/LeftTabWidget.cpp
-    src/QMLTreeSitter.cpp
+    src/QTreeSitter.cpp
 )
 
 set(PROJECT_HEADERS
@@ -39,7 +39,7 @@ set(PROJECT_HEADERS
     include/SceneExplorer.h
     include/ShapeCreationDialog.h
     include/LeftTabWidget.h
-    include/QMLTreeSitter.h
+    include/QTreeSitter.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

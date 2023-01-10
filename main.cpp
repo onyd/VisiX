@@ -4,7 +4,7 @@
 
 #include <MainWindow.hpp>
 
-#include "QMLTreeSitter.h"
+#include "QTreeSitter.h"
 
 int main(int argc, char** argv)
 {
@@ -15,7 +15,7 @@ int main(int argc, char** argv)
         return -1;
     QTextStream in(&file);
 
-    QMLTreeSitter parser;
+    QTreeSitter parser = QTreeSitter::QML();
     QString source = in.readAll();
     parser.setSource(source);
     parser.update();

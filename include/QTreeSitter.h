@@ -9,10 +9,20 @@ extern "C" {
     const TSLanguage* tree_sitter_qmljs();
 }
 
+typedef TSRange QTSRange;
+
 class QTSNode
 {
 public:
     QTSNode(const TSNode& node);
+
+    uint32_t start() const;
+    uint32_t end() const;
+
+    TSPoint startPos() const;
+    TSPoint endPos() const;
+
+    QTSRange range() const;
 
 private:
     friend class QTreeSitter;
@@ -32,19 +42,23 @@ private:
     TSQuery* m_query;
 };
 
+typedef QTSNode QTSCapture;
+typedef QVector<QTSCapture> QTSCaptures;
+
 class QTSMatches
 {
 public:
-    QTSMatches();
-    ~QTSMatches();
+    QTSMatches() = default;
 
-    QVector<QTSNode>::iterator begin();
-    QVector<QTSNode>::iterator end();
+    bool next();
+    QTSCapture currentCapture() const;
+    QTSCaptures currentCaptures() const;
 
 private:
     friend class QTreeSitter;
 
-    QVector<TSQueryMatch*> m_matches;
+    TSQueryMatch m_match;
+    bool m_finished = false;
 };
 
 class QTreeSitter : public QObject
@@ -62,16 +76,17 @@ public:
     void edit(const TSInputEdit& edit);
     void update();
 
-    TSNode root();
+    QTSNode root() const;
 
-    TSRange nodeRange(const TSNode& node);
-    QStringView nodeText(const TSNode& node);
-
-    QStringView text(const TSRange& range);
+    QStringView text(const QTSNode& node) const;
+    QStringView text(const QTSRange& range) const;
 
     QTSQuery build(const QString& source) const;
-    QTSMatches match(const QTSQuery& query);
-    QTSMatches match(const QTSQuery& query, const QTSNode& node);
+
+    QTSMatches match(const QString& query_source) const;
+    QTSMatches match(const QString& query_source, const QTSNode& node) const;
+    QTSMatches match(const QTSQuery& query) const;
+    QTSMatches match(const QTSQuery& query, const QTSNode& node) const;
 
     static QTreeSitter QML(QObject* parent = nullptr);
 
