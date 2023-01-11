@@ -20,6 +20,20 @@ int main(int argc, char** argv)
     parser.setSource(source);
     parser.update();
 
+    auto d = parser.text(parser.root());
+    qDebug() << d.toUtf8().data();
+    qDebug() << parser.print();
+
+    QTSQuery query = parser.build("(ui_import source: (identifier) @source)");
+    QTSMatches matches = parser.match(query);
+
+    while (matches.next()) {
+        auto match = matches.current();
+        for (const auto& capture : match) {
+            qDebug() << parser.text(capture);
+        }
+    }
+
     QApplication app(argc, argv);
 
     // Creating main window

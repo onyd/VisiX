@@ -5,36 +5,40 @@
 
 static const char* ts_qstring_input_read(
     void* payload,
-    uint32_t offset,
+    uint32_t byte_offset,
     TSPoint pt,
     uint32_t* length
 ) {
     QString* qstr = (QString*)payload;
-    if (offset >= qstr->size()) {
+    if (byte_offset >= 2 * qstr->size()) {
         *length = 0;
         return "";
     }
     else {
-        *length = qstr->size() - offset;
-        return (char*)(qstr->data() + offset);
+        *length = 2 * (qstr->size() - byte_offset);
+        return (char*)qstr->data() + byte_offset;
     }
 }
 
 /***
     QTSNode
 ***/
+QTSNode::QTSNode()
+    : m_node({ {}, nullptr, nullptr })
+{}
+
 QTSNode::QTSNode(const TSNode& node)
     : m_node(node)
 {}
 
 uint32_t QTSNode::start() const
 {
-    return ts_node_start_byte(m_node);
+    return ts_node_start_byte(m_node) / 2;
 }
 
 uint32_t QTSNode::end() const
 {
-    return ts_node_end_byte(m_node);
+    return ts_node_end_byte(m_node) / 2;
 }
 
 TSPoint QTSNode::startPos() const
@@ -81,8 +85,71 @@ QTSQuery::~QTSQuery()
 }
 
 /***
+    QTSMatch
+***/
+QTSMatch::QTSMatch(const TSQueryMatch& match)
+    : m_captures(match.capture_count)
+{
+    for (int i = 0; i < match.capture_count; i++)
+        m_captures[i] = QTSNode(match.captures[i].node);
+}
+
+QTSNode QTSMatch::at(qsizetype i) const
+{
+    return m_captures[i];
+}
+
+qsizetype QTSMatch::size() const
+{
+    return m_captures.size();
+}
+
+QTSMatch::QTSCaptures::iterator QTSMatch::begin()
+{
+    return m_captures.begin();
+}
+
+QTSMatch::QTSCaptures::iterator QTSMatch::end()
+{
+    return m_captures.end();
+}
+
+QTSMatch::QTSCaptures::ConstIterator QTSMatch::cbegin() const
+{
+    return m_captures.cbegin();
+}
+
+QTSMatch::QTSCaptures::ConstIterator QTSMatch::cend() const
+{
+    return m_captures.cend();
+}
+
+/***
     QTSMatches
 ***/
+QTSMatches::QTSMatches(const QTSQuery& query, const QTSNode& node)
+    : m_query(query),
+      m_node(node),
+      m_match({}),
+      m_cursor(ts_query_cursor_new())
+{
+    ts_query_cursor_exec(m_cursor, m_query.m_query, m_node.m_node);
+}
+
+QTSMatches::~QTSMatches()
+{
+    ts_query_cursor_delete(m_cursor);
+}
+
+bool QTSMatches::next()
+{
+    return ts_query_cursor_next_match(m_cursor, &m_match);
+}
+
+QTSMatch QTSMatches::current() const
+{
+    return QTSMatch(m_match);
+}
 
 /***
     QTreeSitter
@@ -91,9 +158,9 @@ QTreeSitter::QTreeSitter(const TSLanguage* language, QObject * parent)
     : QObject(parent), 
       m_language(language),
       m_parser(ts_parser_new()), 
-      m_query_cursor(ts_query_cursor_new()),
+      m_source(""),
       m_input({
-        nullptr,
+        &m_source,
         ts_qstring_input_read,
         TSInputEncodingUTF16
       })
@@ -111,7 +178,6 @@ QTreeSitter::~QTreeSitter()
 void QTreeSitter::setSource(const QString& source)
 {
     m_source = source;
-    m_input.payload = (void*)&m_source;
 }
 
 const QString& QTreeSitter::source() const
@@ -146,23 +212,17 @@ void QTreeSitter::update()
         m_tree,
         m_input
     );
-
-    auto d = text(root());
-    qDebug() << d.toUtf8().data();
 }
-
 
 QTSNode QTreeSitter::root() const
 {
     if (m_tree == nullptr) {
         qErrnoWarning("QTreeSitter: Try getting root of empty syntax tree.");
-        return TSNode{ {}, nullptr, nullptr };
+        return QTSNode();
     }
 
     return ts_tree_root_node(m_tree);
 }
-
-
 
 QStringView QTreeSitter::text(const QTSNode& node) const
 {
@@ -183,40 +243,31 @@ QTSQuery QTreeSitter::build(const QString& source) const
 
 QTSMatches QTreeSitter::match(const QString& query_source) const
 {
-    match(query_source, root());
+    return match(query_source, root());
 }
 
 QTSMatches QTreeSitter::match(const QString& query_source, const QTSNode& node) const
 {
     QTSQuery query = build(query_source);
-    ts_query_cursor_exec(m_query_cursor, query.m_query, node.m_node);
-
-    QTSMatches query_matches;
-    TSQueryMatch match;
-    while (ts_query_cursor_next_match(m_query_cursor, &match))
-        query_matches.m_matches.emplaceBack(match);
-
-    return query_matches;
+    return QTSMatches(query, node);
 }
 
 QTSMatches QTreeSitter::match(const QTSQuery& query) const
 {
-    match(query, root());
+    return match(query, root());
 }
 
 QTSMatches QTreeSitter::match(const QTSQuery& query, const QTSNode& node) const
 {
-    ts_query_cursor_exec(m_query_cursor, query.m_query, node.m_node);
-    
-    QTSMatches query_matches;
-    TSQueryMatch match;
-    while (ts_query_cursor_next_match(m_query_cursor, &match))
-        query_matches.m_matches.emplaceBack(match);
-
-    return query_matches;
+    return QTSMatches(query, node);
 }
 
 QTreeSitter QTreeSitter::QML(QObject* parent)
 {
     return QTreeSitter(tree_sitter_qmljs(), parent);
+}
+
+const char* QTreeSitter::print() const
+{
+    return ts_node_string(root().m_node);
 }
