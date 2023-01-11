@@ -31,6 +31,79 @@ QTSNode::QTSNode(const TSNode& node)
     : m_node(node)
 {}
 
+const char* QTSNode::type() const
+{
+    return ts_node_type(m_node);
+}
+
+bool QTSNode::isNull() const
+{
+    return ts_node_is_null(m_node);
+}
+
+bool QTSNode::isNamed() const
+{
+    return ts_node_is_named(m_node);
+}
+
+bool QTSNode::isMissing() const
+{
+    return ts_node_is_missing(m_node);
+}
+
+bool QTSNode::isExtra() const
+{
+    return ts_node_is_extra(m_node);
+}
+
+bool QTSNode::hasError() const
+{
+    return ts_node_has_error(m_node);
+}
+
+QTSNode QTSNode::parent() const
+{
+    return QTSNode(ts_node_parent(m_node));
+}
+
+QTSNode QTSNode::child(uint32_t index, bool include_anonymous = true) const
+{
+    if (include_anonymous)
+        return QTSNode(ts_node_child(m_node, index));
+    return QTSNode(ts_node_named_child(m_node, index));
+}
+
+QTSNode QTSNode::child(const std::string& field_name) const
+{
+    return QTSNode(ts_node_child_by_field_name(m_node, field_name.c_str(), field_name.size()));
+}
+
+uint32_t QTSNode::childCount(bool include_anonymous = true) const
+{
+    if (include_anonymous)
+        return ts_node_child_count(m_node);
+    return ts_node_named_child_count(m_node);
+}
+
+QTSNode QTSNode::previousSibling(bool include_anonymous = true) const
+{
+    if (include_anonymous)
+        return QTSNode(ts_node_prev_sibling(m_node));
+    return QTSNode(ts_node_prev_named_sibling(m_node));
+}
+
+QTSNode QTSNode::nextSibling(bool include_anonymous = true) const
+{
+    if (include_anonymous)
+        return QTSNode(ts_node_next_sibling(m_node));
+    return QTSNode(ts_node_next_named_sibling(m_node));
+}
+
+void QTSNode::edit(const QTSInputEdit& edit)
+{
+    ts_node_edit(&m_node, &edit);
+}
+
 uint32_t QTSNode::start() const
 {
     return ts_node_start_byte(m_node) / 2;
@@ -61,22 +134,59 @@ QTSRange QTSNode::range() const
     return range;
 }
 
+bool QTSNode::operator==(const QTSNode& node) const
+{
+    return ts_node_eq(m_node, node.m_node);
+}
+
+/***
+    QTSTreeCursor
+***/
+QTSTreeCursor::QTSTreeCursor(const QTSNode& node)
+    : m_cursor(ts_tree_cursor_new(node.m_node))
+{}
+
+QTSTreeCursor::~QTSTreeCursor()
+{
+    ts_tree_cursor_delete(&m_cursor);
+}
+
+void QTSTreeCursor::reset(const QTSNode& node)
+{
+    ts_tree_cursor_reset(&m_cursor, node.m_node);
+}
+
+QTSNode QTSTreeCursor::current() const
+{
+    return QTSNode(ts_tree_cursor_current_node(&m_cursor));
+}
+
+bool QTSTreeCursor::visitParent()
+{
+    return ts_tree_cursor_goto_parent(&m_cursor);
+}
+
+bool QTSTreeCursor::visitNextSibling()
+{
+    return ts_tree_cursor_goto_next_sibling(&m_cursor);
+}
+
+bool QTSTreeCursor::visitFirstChild()
+{
+    return ts_tree_cursor_goto_first_child(&m_cursor);
+}
+
 /***
     QTSQuery
 ***/
-QTSQuery::QTSQuery(const QString& source, const TSLanguage* language)
+QTSQuery::QTSQuery(const std::string& source, const TSLanguage* language)
 {
-    auto source_bytes = source.toUtf8();
     uint32_t error_offset;
     TSQueryError error_type;
-    m_query = ts_query_new(language, source_bytes.data(), source_bytes.size(), &error_offset, &error_type);
+    m_query = ts_query_new(language, source.data(), source.size(), &error_offset, &error_type);
 
-    if (m_query == nullptr) {
-        std::string message;
-        message += "QTSQuery: Failed to build query with source:\n";
-        message += source_bytes.data();
-        throw std::runtime_error(message);
-    }
+    if (m_query == nullptr) 
+        throw std::runtime_error("QTSQuery: Failed to build query with source:\n" + source);
 }
 
 QTSQuery::~QTSQuery()
@@ -87,41 +197,37 @@ QTSQuery::~QTSQuery()
 /***
     QTSMatch
 ***/
+QTSMatch::QTSMatch()
+    : m_match(std::nullopt)
+{}
+
 QTSMatch::QTSMatch(const TSQueryMatch& match)
-    : m_captures(match.capture_count)
+    : m_match(std::make_optional(match))
+{}
+
+bool QTSMatch::valid() const
 {
-    for (int i = 0; i < match.capture_count; i++)
-        m_captures[i] = QTSNode(match.captures[i].node);
+    return m_match.has_value();
 }
 
 QTSNode QTSMatch::at(qsizetype i) const
 {
-    return m_captures[i];
+    return QTSNode(m_match->captures[i].node);
 }
 
 qsizetype QTSMatch::size() const
 {
-    return m_captures.size();
+    return m_match->capture_count;
 }
 
-QTSMatch::QTSCaptures::iterator QTSMatch::begin()
+QTSMatch::iterator QTSMatch::begin() const
 {
-    return m_captures.begin();
+    return QTSMatch::iterator(&m_match->captures[0]);
 }
 
-QTSMatch::QTSCaptures::iterator QTSMatch::end()
+QTSMatch::iterator QTSMatch::end() const
 {
-    return m_captures.end();
-}
-
-QTSMatch::QTSCaptures::ConstIterator QTSMatch::cbegin() const
-{
-    return m_captures.cbegin();
-}
-
-QTSMatch::QTSCaptures::ConstIterator QTSMatch::cend() const
-{
-    return m_captures.cend();
+    return QTSMatch::iterator(&m_match->captures[size()]);
 }
 
 /***
@@ -130,7 +236,6 @@ QTSMatch::QTSCaptures::ConstIterator QTSMatch::cend() const
 QTSMatches::QTSMatches(const QTSQuery& query, const QTSNode& node)
     : m_query(query),
       m_node(node),
-      m_match({}),
       m_cursor(ts_query_cursor_new())
 {
     ts_query_cursor_exec(m_cursor, m_query.m_query, m_node.m_node);
@@ -141,14 +246,16 @@ QTSMatches::~QTSMatches()
     ts_query_cursor_delete(m_cursor);
 }
 
-bool QTSMatches::next()
+
+QTSMatches::iterator QTSMatches::begin() const
 {
-    return ts_query_cursor_next_match(m_cursor, &m_match);
+    return iterator(this);
 }
 
-QTSMatch QTSMatches::current() const
+QTSMatches::iterator QTSMatches::end() const
 {
-    return QTSMatch(m_match);
+    return iterator(this);
+
 }
 
 /***
@@ -236,17 +343,22 @@ QStringView QTreeSitter::text(const TSRange& range) const
     return QStringView(m_source.data() + range.start_byte, range.end_byte - range.start_byte);
 }
 
-QTSQuery QTreeSitter::build(const QString& source) const
+QTSTreeCursor QTreeSitter::rootCursor() const
+{
+    return QTSTreeCursor(root());
+}
+
+QTSQuery QTreeSitter::build(const std::string& source) const
 {
     return QTSQuery(source, m_language);
 }
 
-QTSMatches QTreeSitter::match(const QString& query_source) const
+QTSMatches QTreeSitter::match(const std::string& query_source) const
 {
     return match(query_source, root());
 }
 
-QTSMatches QTreeSitter::match(const QString& query_source, const QTSNode& node) const
+QTSMatches QTreeSitter::match(const std::string& query_source, const QTSNode& node) const
 {
     QTSQuery query = build(query_source);
     return QTSMatches(query, node);
