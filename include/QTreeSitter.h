@@ -17,48 +17,16 @@ typedef TSQueryCapture QTSCapture;
 typedef TSLanguage QTSLanguage;
 typedef TSInputEdit QTSInputEdit;
 
-template <class T>
-class UpdateIterator
-{
-    using iterator_category = std::input_iterator_tag;
-
-    using value_type = T;
-    using reference_type = value_type&;
-
-    using update_t = std::function<value_type(reference_type)>;
-
-    UpdateIterator(const reference_type first, const update_t& update_fn) : m_value(first), m_update(update_fn) {}
-
-    const reference_type operator*() const
-    {
-        return m_match;
-    }
-
-    // Prefix increment
-    UpdateIterator& operator++()
-    {
-        m_value = m_update(m_value);
-        return *this;
-    }
-
-    // Postfix increment
-    UpdateIterator operator++(int) { UpdateIterator tmp = *this; ++(*this); return tmp; }
-
-    friend bool operator== (const UpdateIterator& a, const UpdateIterator& b) { return (a.m_value == b.m_value); };
-    friend bool operator!= (const UpdateIterator& a, const UpdateIterator& b) { return !(a == b); };
-
-private:
-    update_t m_update;
-    value_type m_value;
-};
+class QTreeSitter;
 
 class QTSNode
 {
 public:
     QTSNode();
-    QTSNode(const TSNode& node);
+    QTSNode(const TSNode& node, const QTreeSitter* owner);
 
     const char* type() const;
+    QStringView text() const;
 
     bool isNull() const;
     bool isNamed() const;
@@ -92,6 +60,7 @@ private:
     friend class QTSTreeCursor;
     friend class QTSMatches;
     
+    const QTreeSitter* m_owner;
     TSNode m_node;
 };
 
@@ -109,6 +78,7 @@ public:
     bool visitFirstChild();
 
 private:
+    const QTreeSitter* m_owner;
     TSTreeCursor m_cursor;
 };
 
@@ -124,6 +94,8 @@ private:
     TSQuery* m_query;
 };
 
+class CursorIterator;
+
 class QTSMatch
 {
 public:
@@ -136,9 +108,9 @@ public:
         using value_type = QTSNode;
         using pointer_type = const QTSCapture*;
 
-        iterator(pointer_type ptr) : m_ptr(ptr) {}
+        iterator(pointer_type ptr, const QTreeSitter* owner) : m_ptr(ptr), m_owner(owner) {}
 
-        value_type operator*() const { return QTSNode(m_ptr->node); }
+        value_type operator*() const { return QTSNode(m_ptr->node, m_owner); }
 
         // Prefix increment
         iterator& operator++() { m_ptr++; return *this; }
@@ -150,56 +122,95 @@ public:
         friend bool operator!= (const iterator& a, const iterator& b) { return a.m_ptr != b.m_ptr; };
 
     private:
+        const QTreeSitter* m_owner;
         pointer_type m_ptr;
     };
 
-public:
-
     QTSMatch();
-    QTSMatch(const TSQueryMatch& match);
+    QTSMatch(const TSQueryMatch& match, const QTreeSitter* owner);
 
     bool valid() const;
-    QTSNode at(qsizetype i) const;
-    qsizetype size() const;
+    QTSNode at(uint32_t i) const;
+    uint32_t size() const;
 
     iterator begin() const;
     iterator end() const;
 
-    friend bool operator==(const QTSMatch& a, const QTSMatch& b) { return (a.m_match == std::nullopt && a.m_match == std::nullopt ||
-                                                                          (a.m_match != std::nullopt && a.m_match != std::nullopt && a.m_match->id == b.m_match->id)); };
+    friend bool operator==(const QTSMatch& a, const QTSMatch& b) { return (a.m_owner == b.m_owner && 
+                                                                          (!a.valid() && !b.valid() ||
+                                                                          (a.valid() && b.valid() && a.m_match->id == b.m_match->id))); };
     friend bool operator!=(const QTSMatch& a, const QTSMatch& b) { return !(a == b); };
 
 private:
+    friend class CursorIterator;
 
+    const QTreeSitter* m_owner;
     std::optional<TSQueryMatch> m_match;
+};
+
+class CursorIterator
+{
+public:
+    using iterator_category = std::input_iterator_tag;
+
+    using value_type = QTSMatch;
+    using reference_type = value_type&;
+    using creference_type = const value_type&;
+
+    CursorIterator(const QTreeSitter* owner, TSQueryCursor* cursor = nullptr) : m_cursor(cursor)
+    {
+        if (cursor != nullptr) { // Initialize to first value if cursor
+            TSQueryMatch first_match;
+            ts_query_cursor_next_match(m_cursor, &first_match);
+            m_qmatch = QTSMatch(first_match, owner);
+        }
+    }
+
+    ~CursorIterator()
+    {
+        if (m_cursor != nullptr)
+            ts_query_cursor_delete(m_cursor);
+    }
+
+    creference_type operator*() const { return m_qmatch; }
+
+    // Prefix increment
+    CursorIterator& operator++()
+    {
+        if (!m_qmatch.valid())
+            return *this; // Do nothing if we're at the end
+
+        if (!ts_query_cursor_next_match(m_cursor, &m_qmatch.m_match.value())) {
+            m_qmatch = QTSMatch(); // No more match so set it to null match
+            ts_query_cursor_delete(m_cursor);
+            m_cursor = nullptr;
+        }
+
+        return *this;
+    }
+
+    // Postfix increment
+    CursorIterator operator++(int) { CursorIterator tmp = *this; ++(*this); return tmp; }
+
+    friend bool operator== (const CursorIterator& a, const CursorIterator& b) { return (a.m_cursor == b.m_cursor && a.m_qmatch == b.m_qmatch); };
+    friend bool operator!= (const CursorIterator& a, const CursorIterator& b) { return !(a == b); };
+
+private:
+    TSQueryCursor* m_cursor;
+    QTSMatch m_qmatch;
 };
 
 class QTSMatches
 {
 public:
-    class iterator : public UpdateIterator<QTSMatch>
-    {
-    public:
-        iterator(const QTSMatch& match) 
-            : UpdateIterator<QTSMatch>(match, 
-                [](const QTSMatch& current) 
-                { return QTSMatch(); 
-                }) 
-        {}
-
-    private:
-        TSQueryCursor* m_cursor;
-    };
+    using iterator = CursorIterator;
 
     QTSMatches(const QTSQuery& query, const QTSNode& node);
-    ~QTSMatches();
 
     iterator begin() const;
     iterator end() const;
 
 private:
-    friend struct iterator;
-
     QTSQuery m_query;
     QTSNode m_node;
 };
@@ -222,7 +233,6 @@ public:
     QTSNode root() const;
 
     QStringView text(const QTSNode& node) const;
-    QStringView text(const QTSRange& range) const;
 
     QTSTreeCursor rootCursor() const;
     QTSQuery build(const std::string& source) const;

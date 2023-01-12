@@ -24,16 +24,21 @@ static const char* ts_qstring_input_read(
     QTSNode
 ***/
 QTSNode::QTSNode()
-    : m_node({ {}, nullptr, nullptr })
+    : m_node({ {}, nullptr, nullptr }), m_owner(nullptr)
 {}
 
-QTSNode::QTSNode(const TSNode& node)
-    : m_node(node)
+QTSNode::QTSNode(const TSNode& node, const QTreeSitter* owner)
+    : m_node(node), m_owner(owner)
 {}
 
 const char* QTSNode::type() const
 {
     return ts_node_type(m_node);
+}
+
+QStringView QTSNode::text() const
+{
+    return m_owner->text(*this);
 }
 
 bool QTSNode::isNull() const
@@ -63,40 +68,40 @@ bool QTSNode::hasError() const
 
 QTSNode QTSNode::parent() const
 {
-    return QTSNode(ts_node_parent(m_node));
+    return QTSNode(ts_node_parent(m_node), m_owner);
 }
 
-QTSNode QTSNode::child(uint32_t index, bool include_anonymous = true) const
+QTSNode QTSNode::child(uint32_t index, bool include_anonymous) const
 {
     if (include_anonymous)
-        return QTSNode(ts_node_child(m_node, index));
-    return QTSNode(ts_node_named_child(m_node, index));
+        return QTSNode(ts_node_child(m_node, index), m_owner);
+    return QTSNode(ts_node_named_child(m_node, index), m_owner);
 }
 
 QTSNode QTSNode::child(const std::string& field_name) const
 {
-    return QTSNode(ts_node_child_by_field_name(m_node, field_name.c_str(), field_name.size()));
+    return QTSNode(ts_node_child_by_field_name(m_node, field_name.c_str(), (uint32_t)field_name.size()), m_owner);
 }
 
-uint32_t QTSNode::childCount(bool include_anonymous = true) const
+uint32_t QTSNode::childCount(bool include_anonymous) const
 {
     if (include_anonymous)
         return ts_node_child_count(m_node);
     return ts_node_named_child_count(m_node);
 }
 
-QTSNode QTSNode::previousSibling(bool include_anonymous = true) const
+QTSNode QTSNode::previousSibling(bool include_anonymous) const
 {
     if (include_anonymous)
-        return QTSNode(ts_node_prev_sibling(m_node));
-    return QTSNode(ts_node_prev_named_sibling(m_node));
+        return QTSNode(ts_node_prev_sibling(m_node), m_owner);
+    return QTSNode(ts_node_prev_named_sibling(m_node), m_owner);
 }
 
-QTSNode QTSNode::nextSibling(bool include_anonymous = true) const
+QTSNode QTSNode::nextSibling(bool include_anonymous) const
 {
     if (include_anonymous)
-        return QTSNode(ts_node_next_sibling(m_node));
-    return QTSNode(ts_node_next_named_sibling(m_node));
+        return QTSNode(ts_node_next_sibling(m_node), m_owner);
+    return QTSNode(ts_node_next_named_sibling(m_node), m_owner);
 }
 
 void QTSNode::edit(const QTSInputEdit& edit)
@@ -143,7 +148,7 @@ bool QTSNode::operator==(const QTSNode& node) const
     QTSTreeCursor
 ***/
 QTSTreeCursor::QTSTreeCursor(const QTSNode& node)
-    : m_cursor(ts_tree_cursor_new(node.m_node))
+    : m_cursor(ts_tree_cursor_new(node.m_node)), m_owner(node.m_owner)
 {}
 
 QTSTreeCursor::~QTSTreeCursor()
@@ -158,7 +163,7 @@ void QTSTreeCursor::reset(const QTSNode& node)
 
 QTSNode QTSTreeCursor::current() const
 {
-    return QTSNode(ts_tree_cursor_current_node(&m_cursor));
+    return QTSNode(ts_tree_cursor_current_node(&m_cursor), m_owner);
 }
 
 bool QTSTreeCursor::visitParent()
@@ -183,7 +188,7 @@ QTSQuery::QTSQuery(const std::string& source, const TSLanguage* language)
 {
     uint32_t error_offset;
     TSQueryError error_type;
-    m_query = ts_query_new(language, source.data(), source.size(), &error_offset, &error_type);
+    m_query = ts_query_new(language, source.data(), (uint32_t)source.size(), &error_offset, &error_type);
 
     if (m_query == nullptr) 
         throw std::runtime_error("QTSQuery: Failed to build query with source:\n" + source);
@@ -198,11 +203,11 @@ QTSQuery::~QTSQuery()
     QTSMatch
 ***/
 QTSMatch::QTSMatch()
-    : m_match(std::nullopt)
+    : m_match(std::nullopt), m_owner(nullptr)
 {}
-
-QTSMatch::QTSMatch(const TSQueryMatch& match)
-    : m_match(std::make_optional(match))
+ 
+QTSMatch::QTSMatch(const TSQueryMatch& match, const QTreeSitter* owner)
+    : m_match(std::make_optional(match)), m_owner(owner)
 {}
 
 bool QTSMatch::valid() const
@@ -210,24 +215,24 @@ bool QTSMatch::valid() const
     return m_match.has_value();
 }
 
-QTSNode QTSMatch::at(qsizetype i) const
+QTSNode QTSMatch::at(uint32_t i) const
 {
-    return QTSNode(m_match->captures[i].node);
+    return QTSNode(m_match->captures[i].node, m_owner);
 }
 
-qsizetype QTSMatch::size() const
+uint32_t QTSMatch::size() const
 {
     return m_match->capture_count;
 }
 
 QTSMatch::iterator QTSMatch::begin() const
 {
-    return QTSMatch::iterator(&m_match->captures[0]);
+    return QTSMatch::iterator(&m_match->captures[0], m_owner);
 }
 
 QTSMatch::iterator QTSMatch::end() const
 {
-    return QTSMatch::iterator(&m_match->captures[size()]);
+    return QTSMatch::iterator(&m_match->captures[size()], m_owner);
 }
 
 /***
@@ -235,27 +240,19 @@ QTSMatch::iterator QTSMatch::end() const
 ***/
 QTSMatches::QTSMatches(const QTSQuery& query, const QTSNode& node)
     : m_query(query),
-      m_node(node),
-      m_cursor(ts_query_cursor_new())
-{
-    ts_query_cursor_exec(m_cursor, m_query.m_query, m_node.m_node);
-}
-
-QTSMatches::~QTSMatches()
-{
-    ts_query_cursor_delete(m_cursor);
-}
-
+      m_node(node)
+{}
 
 QTSMatches::iterator QTSMatches::begin() const
 {
-    return iterator(this);
+    TSQueryCursor* cursor = ts_query_cursor_new();
+    ts_query_cursor_exec(cursor, m_query.m_query, m_node.m_node);
+    return QTSMatches::iterator(m_node.m_owner, cursor);
 }
 
 QTSMatches::iterator QTSMatches::end() const
 {
-    return iterator(this);
-
+    return QTSMatches::iterator(nullptr);
 }
 
 /***
@@ -328,7 +325,7 @@ QTSNode QTreeSitter::root() const
         return QTSNode();
     }
 
-    return ts_tree_root_node(m_tree);
+    return QTSNode(ts_tree_root_node(m_tree), this);
 }
 
 QStringView QTreeSitter::text(const QTSNode& node) const
@@ -336,11 +333,6 @@ QStringView QTreeSitter::text(const QTSNode& node) const
     uint32_t start_byte = node.start();
     uint32_t end_byte = node.end();
     return QStringView(m_source.data() + start_byte, end_byte - start_byte);
-}
-
-QStringView QTreeSitter::text(const TSRange& range) const
-{
-    return QStringView(m_source.data() + range.start_byte, range.end_byte - range.start_byte);
 }
 
 QTSTreeCursor QTreeSitter::rootCursor() const

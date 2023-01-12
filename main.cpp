@@ -24,13 +24,10 @@ int main(int argc, char** argv)
     qDebug() << d.toUtf8().data();
     qDebug() << parser.print();
 
-    QTSQuery query = parser.build("(ui_import source: (identifier) @source)");
-    QTSMatches matches = parser.match(query);
-
-    while (matches.next()) {
-        auto match = matches.current();
+    QTSMatches matches = parser.match("(ui_object_definition type_name: (identifier) @type_name)");
+    for (const auto& match : matches) {
         for (const auto& capture : match) {
-            qDebug() << parser.text(capture);
+            qDebug() << capture.text();
         }
     }
 
