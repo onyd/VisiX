@@ -24,7 +24,12 @@ int main(int argc, char** argv)
     qDebug() << d.toUtf8().data();
     qDebug() << parser.print();
 
-    QTSMatches matches = parser.match("(ui_object_definition type_name: (identifier) @type_name)");
+    QFile qfile("..\\resources\\queries\\objects.scm");
+    if (!qfile.open(QIODevice::ReadOnly | QIODevice::Text))
+        return -1;
+    auto query = qfile.readAll().toStdString();
+
+    QTSMatches matches = parser.match(query);
     for (const auto& match : matches) {
         for (const auto& capture : match) {
             qDebug() << capture.text();

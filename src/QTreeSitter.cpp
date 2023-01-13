@@ -20,6 +20,11 @@ static const char* ts_qstring_input_read(
     }
 }
 
+bool operator==(const TSQueryMatch& a, const TSQueryMatch& b)
+{
+    return a.id == b.id && a.pattern_index == b.pattern_index;
+}
+
 /***
     QTSNode
 ***/
@@ -64,6 +69,11 @@ bool QTSNode::isExtra() const
 bool QTSNode::hasError() const
 {
     return ts_node_has_error(m_node);
+}
+
+const QTreeSitter* QTSNode::owner() const
+{
+    return m_owner;
 }
 
 QTSNode QTSNode::parent() const
@@ -188,15 +198,11 @@ QTSQuery::QTSQuery(const std::string& source, const TSLanguage* language)
 {
     uint32_t error_offset;
     TSQueryError error_type;
-    m_query = ts_query_new(language, source.data(), (uint32_t)source.size(), &error_offset, &error_type);
+    m_query = std::shared_ptr<TSQuery>(ts_query_new(language, source.data(), (uint32_t)source.size(), &error_offset, &error_type),
+                                       [](TSQuery* query) {ts_query_delete(query); });
 
     if (m_query == nullptr) 
         throw std::runtime_error("QTSQuery: Failed to build query with source:\n" + source);
-}
-
-QTSQuery::~QTSQuery()
-{
-    ts_query_delete(m_query);
 }
 
 /***
@@ -205,10 +211,19 @@ QTSQuery::~QTSQuery()
 QTSMatch::QTSMatch()
     : m_match(std::nullopt), m_owner(nullptr)
 {}
+
+QTSMatch::QTSMatch(nullptr_t ptr)
+    : QTSMatch()
+{}
  
 QTSMatch::QTSMatch(const TSQueryMatch& match, const QTreeSitter* owner)
     : m_match(std::make_optional(match)), m_owner(owner)
 {}
+
+const QTreeSitter* QTSMatch::owner() const
+{
+    return m_owner;
+}
 
 bool QTSMatch::valid() const
 {
@@ -236,6 +251,40 @@ QTSMatch::iterator QTSMatch::end() const
 }
 
 /***
+    QTSQueryCursor
+***/
+QTSQueryCursor::QTSQueryCursor(const QTSQuery& query, const QTSNode& node, const QTreeSitter* owner) : m_owner(owner)
+{
+    m_cursor = std::shared_ptr<TSQueryCursor>(ts_query_cursor_new(), [](TSQueryCursor* cursor) { ts_query_cursor_delete(cursor); });
+    ts_query_cursor_exec(m_cursor.get(), query.m_query.get(), node.m_node);
+}
+
+QTSQueryCursor::QTSQueryCursor(nullptr_t)
+{
+    m_cursor = nullptr;
+}
+
+QTSMatch QTSQueryCursor::next()
+{
+    TSQueryMatch next_match;
+    if (ts_query_cursor_next_match(m_cursor.get(), &next_match)) 
+        return QTSMatch(next_match, m_owner); 
+    
+    m_cursor = nullptr;
+    return nullptr; // No more match so return null match
+} 
+
+bool operator==(const QTSQueryCursor& a, const QTSQueryCursor& b)
+{
+    return a.m_cursor == b.m_cursor;
+}
+
+bool operator!=(const QTSQueryCursor& a, const QTSQueryCursor& b)
+{
+    return !(a == b);
+}
+
+/***
     QTSMatches
 ***/
 QTSMatches::QTSMatches(const QTSQuery& query, const QTSNode& node)
@@ -245,9 +294,7 @@ QTSMatches::QTSMatches(const QTSQuery& query, const QTSNode& node)
 
 QTSMatches::iterator QTSMatches::begin() const
 {
-    TSQueryCursor* cursor = ts_query_cursor_new();
-    ts_query_cursor_exec(cursor, m_query.m_query, m_node.m_node);
-    return QTSMatches::iterator(m_node.m_owner, cursor);
+    return QTSMatches::iterator(m_node.owner(), QTSQueryCursor(m_query, m_node, m_node.owner()));
 }
 
 QTSMatches::iterator QTSMatches::end() const
